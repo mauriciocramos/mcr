@@ -1,2 +1,2 @@
 # machine-learning
-Python machine learning libraries for sparse matrices, metrics, model selection, pre-processing and miscellaneous
+Custom machine learning libraries for scikit-learn about sparse matrices, metrics, model selection, pre-processing and miscellaneous
