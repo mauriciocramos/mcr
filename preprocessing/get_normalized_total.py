@@ -15,7 +15,8 @@ def get_normalized_total(df, reference, ambiguous):
     column name.  After moving the value, the original columns is filled with a missing value NaN.
 
     All resulting missing values in the 'reference', 'ambiguous' and 'ambiguous_reference' columns are imputed with zero
-    with the intent to promote sparsity.  Finally, those column types are downcast to the smallest float possible.
+    with the intent to promote sparsity.  Finally, those column types are downcast to the smallest float possible to
+    reduce memory usage.
 
     :param df: a dataframe
     :param reference: the reference column
