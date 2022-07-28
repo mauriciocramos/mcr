@@ -1,8 +1,6 @@
 # Custom modules: add the 'src' directory as one where we can import modules
 import os
 import sys
-src_dir = os.path.join(os.getcwd(), os.pardir, 'src')
-sys.path.insert(1, src_dir)
 from model_selection.multilabel import multilabel_sample_dataframe, multilabel_train_test_split
 
 
@@ -12,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 
-df = pd.read_csv('../data/TrainingData.csv', index_col=0)
+df = pd.read_csv('/data/drivendata/TrainingData.csv', index_col=0)
 LABELS = ['Function', 'Object_Type', 'Operating_Status', 'Position_Type', 'Pre_K', 'Reporting', 'Sharing',
           'Student_Type', 'Use']
 NON_LABELS = list(set(df.columns) - set(LABELS))
@@ -46,15 +44,16 @@ for SAMPLE_SIZE in np.concatenate([np.linspace(0.01, 0.09, 9), np.linspace(0.1, 
                       'RATIOS train {:.5f} test {:.5f}'
                 print(msg.format(SAMPLE_SIZE, SAMPLE_MIN_COUNT, SAMPLE_LESS_FREQUENT_CLASS, sample_ratio, TEST_SIZE,
                                  TEST_MIN_COUNT, train_lessfreq, test_lessfreq, train_ratio, test_ratio))
-                results = results.append({'sample_size': SAMPLE_SIZE,
-                                          'sample_min_count': SAMPLE_MIN_COUNT,
-                                          'sample_lessfreq': SAMPLE_LESS_FREQUENT_CLASS,
-                                          'sample_ratio': sample_ratio,
-                                          'test_size': TEST_SIZE,
-                                          'test_min_count': TEST_MIN_COUNT,
-                                          'train_lessfreq': train_lessfreq,
-                                          'test_lessfreq': test_lessfreq,
-                                          'train_ratio': train_ratio,
-                                          'test_ratio': test_ratio}, ignore_index=True)
-with open('../data/optimize-sample-split.pkl', 'wb') as file:
+                results = pd.concat([results,
+                                     pd.DataFrame({'sample_size': [SAMPLE_SIZE],
+                                                   'sample_min_count': [SAMPLE_MIN_COUNT],
+                                                   'sample_lessfreq': [SAMPLE_LESS_FREQUENT_CLASS],
+                                                   'sample_ratio': [sample_ratio],
+                                                   'test_size': [TEST_SIZE],
+                                                   'test_min_count': [TEST_MIN_COUNT],
+                                                   'train_lessfreq': [train_lessfreq],
+                                                   'test_lessfreq': [test_lessfreq],
+                                                   'train_ratio': [train_ratio],
+                                                   'test_ratio': [test_ratio]})], ignore_index=True)
+with open('/data/drivendata/optimize-sample-split.pkl', 'wb') as file:
     pickle.dump(results, file, pickle.HIGHEST_PROTOCOL)
