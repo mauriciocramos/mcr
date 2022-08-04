@@ -23,8 +23,6 @@ def get_normalized_total(df, reference, ambiguous):
     """
 def get_normalized_total(df, reference, ambiguous):
     df = df[[reference, ambiguous]].copy()
-    # df[reference+'_missing'] = df[reference].isnull().astype('uint8')
-    # df[ambiguous+'_missing'] = df[ambiguous].isnull().astype('uint8')
     df[[reference+'_missing', ambiguous+'_missing']] = df[[reference, ambiguous]].isnull().astype('uint8')
     ambiguous_reference = ambiguous+'_'+reference
     #df[ambiguous_reference] = np.nan
