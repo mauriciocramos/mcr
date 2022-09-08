@@ -26,7 +26,8 @@ def multilabel_sample(y, size=1000, min_count=5, seed=None):
         msg = "Size less than number of columns * min_count, returning {} items instead of {}."
         warn(msg.format(y.shape[1] * min_count, size))
         size = y.shape[1] * min_count
-    rng = np.random.RandomState(seed if seed is not None else np.random.randint(1))  # IF seed is None setS to ZERO?
+    # rng = np.random.RandomState(seed if seed is not None else np.random.randint(1))  # If seed is None then np.random.int(1) sets the seed to ZERO?
+    rng = np.random.RandomState(seed)  # let's np.RandomState() assumes default seed from the /dev/urandom or clock
     if isinstance(y, pd.DataFrame):
         choices = y.index
         y = y.values
@@ -72,43 +73,49 @@ def multilabel_train_test_split(X, Y, size, min_count=5, seed=None):
 
 
 def sample_report(y, y_sample, figsize=(16, 32)):
-    ratio = pd.concat({'sample_ratio': y_sample.mean() / y.mean()}, axis=1)
+    ratio = pd.concat({'sample_ratio': y_sample.value_counts() / y.value_counts()}, axis=1)
     ratio.index.name='label__class'
-    ratio.sort_values('sample_ratio', ascending=False).plot(kind='barh', stacked=True, figsize=figsize)
-    plt.axvline(1, color='red')
-    plt.title("Stratified sampling ratios")
+    ratio.reset_index(drop=True).sort_values('sample_ratio', ascending=True, na_position='first').plot(kind='barh', stacked=True, figsize=figsize)
+    sample_size = y_sample.shape[0] / y.shape[0]
+    plt.axvline(sample_size, color='red')
+    plt.title(f'Stratified sampling ({sample_size:.1f}) ratios')
     plt.xlabel('ratios')
+    plt.ylabel('labels')
+    plt.yticks([])
     plt.show()
-    return ratio.sort_values('sample_ratio')
+    return ratio.sort_values('sample_ratio', ascending=False)
 
 
-def split_report(y, y_train, y_test, figsize=(16, 32)):
-    y_mean = y.mean()
-    ratio = pd.concat({'train_ratio': y_train.mean() / y_mean,
-                       'test_ratio': y_test.mean() / y_mean}, axis=1)
+def split_report(y, y_train, y_test, figsize=(10, 10)):
+    y_counts= y.value_counts()
+    ratio = pd.concat({'train_ratio': y_train.value_counts() / y_counts,
+                       'test_ratio': y_test.value_counts() / y_counts}, axis=1)
     ratio.index.name='label__class'
-    ratio.sort_values(['test_ratio', 'train_ratio'], ascending=False).plot(kind='barh', stacked=True, figsize=figsize)
-    plt.axvline(1, color='red')
-    plt.axvline(2, color='red')
-    plt.title("Stratified training and testing ratios")
+    ratio.reset_index(drop=True).sort_values(['train_ratio', 'test_ratio'], ascending=True, na_position='first').plot(kind='barh', stacked=True, figsize=figsize)
+    test_size = y_test.shape[0] / y.shape[0]
+    plt.axvline(1 - test_size, color='red')
+    plt.title(f'Stratified training and testing ({test_size:.1f}) ratios')
     plt.xlabel('ratios')
+    plt.ylabel('labels')
+    plt.yticks([])
     plt.show()
-    return ratio.sort_values(['test_ratio', 'train_ratio'])
+    return ratio.sort_values(['train_ratio', 'test_ratio'], ascending=False)
 
 
-def sample_split_report(y, y_sample, y_train, y_test, figsize=(16, 32)):
-    y_mean = y.mean()
-    ratio = pd.concat({'sample_ratio': y_sample.mean() / y_mean,
-                       'train_ratio': y_train.mean() / y_mean,
-                       'test_ratio': y_test.mean() / y_mean}, axis=1)
+def sample_split_report(y, y_sample, y_train, y_test, figsize=(10, 10)):
+    y_counts = y.value_counts()
+    ratio = pd.concat({'sample_ratio': y_sample.value_counts() / y_counts,
+                       'train_ratio': y_train.value_counts() / y_counts,
+                       'test_ratio': y_test.value_counts() / y_counts}, axis=1)
     ratio.index.name='label__class'
-    ratio.sort_values(['test_ratio',
-                       'train_ratio',
-                       'sample_ratio'], ascending=False).plot(kind='barh', stacked=True, figsize=figsize)
-    plt.axvline(1, color='red')
-    plt.axvline(2, color='red')
-    plt.axvline(3, color='red')
-    plt.title("Stratified sampling, training and splitting ratios")
+    ratio.sort_values(['sample_ratio', 'train_ratio', 'test_ratio'], ascending=True, na_position='first').plot(kind='barh', stacked=True, figsize=figsize)
+    sample_size = y_sample.shape[0] / y.shape[0]
+    test_size = y_test.shape[0] / y_sample.shape[0]
+    plt.axvline(sample_size, color='green')
+    plt.axvline(1 - test_size, color='purple')
+    plt.title(f'Stratified sampling ({sample_size:.1f}), training and testing ({test_size:.1f}) ratios')
     plt.xlabel('ratios')
+    plt.ylabel('labels')
+    plt.yticks([])
     plt.show()
-    return ratio.sort_values(['test_ratio', 'train_ratio', 'sample_ratio'])
+    return ratio.sort_values(['sample_ratio', 'train_ratio', 'test_ratio'], ascending=False)
