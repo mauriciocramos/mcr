@@ -50,36 +50,39 @@ def multi_multi_log_loss(actual, predicted, class_column_indices=None, averaged=
 
 
 
-def log_loss_report_part(classifier, X, y, labels, class_column_indices, part="Training"):
+def log_loss_report_part(classifier, X, y, labels, class_column_indices, part="Training", summary=False):
     t=time()
     print(part + ' report started on {}'.format(datetime.now().isoformat(timespec='minutes')))
+    
     print(part + ' accuracy         : {:.4f}'.format(classifier.score(X, y)))
 
     logloss = multi_multi_log_loss(y, classifier.predict_proba(X), class_column_indices, averaged=False)
     print(part + ' log loss         : {:.4f}'.format(logloss.mean()))
 
-    print(part + ' log loss by label:')
-    logloss = pd.DataFrame({'classes': [len(x) for x in class_column_indices], 'log_loss': logloss}, index=labels)
-    logloss['avg_log_loss'] = logloss.log_loss / logloss.classes
-    display(logloss.sort_values('avg_log_loss', ascending=False))
-
-    logloss = multi_multi_log_loss(y, classifier.predict_proba(X), averaged=False)
-    print(part + ' log loss by class:')
-
-    logloss = pd.DataFrame({'occurrences': y.sum(), 'log_loss': logloss}, index=y.columns)
-    logloss['avg_log_loss'] = logloss.log_loss * logloss.occurrences
-    with pd.option_context("display.max_rows", y.shape[1]):
+    if not summary:
+        print(part + ' log loss by label:')
+        logloss = pd.DataFrame({'classes': [len(x) for x in class_column_indices], 'log_loss': logloss}, index=labels)
+        logloss['avg_log_loss'] = logloss.log_loss / logloss.classes
         display(logloss.sort_values('avg_log_loss', ascending=False))
 
-    print(part + ' classification Report:')
-    report = pd.DataFrame(
-        classification_report(y, classifier.predict(X), target_names=y.columns, output_dict=True)).transpose()
-    report, summary = report[:-4].sort_values('f1-score', ascending=True), report[-4:]
-    with pd.option_context("display.max_rows", report.shape[0]):
-        display(report)
-    display(summary)
+        logloss = multi_multi_log_loss(y, classifier.predict_proba(X), averaged=False)
+        print(part + ' log loss by class:')
+
+        logloss = pd.DataFrame({'occurrences': y.sum(), 'log_loss': logloss}, index=y.columns)
+        logloss['avg_log_loss'] = logloss.log_loss * logloss.occurrences
+        with pd.option_context("display.max_rows", y.shape[1]):
+            display(logloss.sort_values('avg_log_loss', ascending=False))
+
+        print(part + ' classification Report:')
+        report = pd.DataFrame(
+            classification_report(y, classifier.predict(X), target_names=y.columns, output_dict=True)).transpose()
+        report, summary = report[:-4].sort_values('f1-score', ascending=True), report[-4:]
+        with pd.option_context("display.max_rows", report.shape[0]):
+            display(report)
+        display(summary)
+    
     print(part + ' report finished on {}, elapsed {:.1f} minutes\n'.format(datetime.now().isoformat(timespec='minutes'), (time()-t)/60))
 
-def log_loss_report(classifier, X_train, y_train, X_test, y_test, labels, class_column_indices):
-    log_loss_report_part(classifier, X_train, y_train, labels, class_column_indices, 'Training')
-    log_loss_report_part(classifier, X_test, y_test, labels, class_column_indices, 'Testing')
+def log_loss_report(classifier, X_train, y_train, X_test, y_test, labels, class_column_indices, summary=False):
+    log_loss_report_part(classifier, X_train, y_train, labels, class_column_indices, part='Training', summary=summary)
+    log_loss_report_part(classifier, X_test, y_test, labels, class_column_indices, part='Testing', summary=summary)
