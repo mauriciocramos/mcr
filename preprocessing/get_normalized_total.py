@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def get_normalized_total(df, reference, ambiguous):
+def get_normalized_total(df=None, reference=None, ambiguous=None):
     """
     Feature generation function which generates missing data binary indicators for two numeric features, and moves
     values from an ambiguous column to a new column, based on whether a reference column is not missing or
@@ -21,7 +21,6 @@ def get_normalized_total(df, reference, ambiguous):
     :param ambiguous: the ambiguous columns
     :return: a dataframe (copy) with the three new columns and the moved/imputed values
     """
-def get_normalized_total(df, reference, ambiguous):
     df = df[[reference, ambiguous]].copy()
     df[[reference+'_missing', ambiguous+'_missing']] = df[[reference, ambiguous]].isnull().astype('uint8')
     ambiguous_reference = ambiguous+'_'+reference
