@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 
-
-def disambiguate(df=None, reference=None, ambiguous=None):
+def disambiguate(df=None, reference=None, ambiguous=None, sparse=False):
     """
     Feature generation function which disambiguate two columns based on their missing relationship.
     
@@ -22,4 +22,5 @@ def disambiguate(df=None, reference=None, ambiguous=None):
     ambiguous_reference = ambiguous+'_'+reference
     df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous_reference] = df[ambiguous]
     df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous] = np.nan
-    return df#.apply(pd.to_numeric, downcast='float')
+    df = df.apply(pd.to_numeric, downcast='float')
+    return csr_matrix(df) if sparse else df
