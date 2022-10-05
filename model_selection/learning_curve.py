@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 from time import time
-
+from multiprocessing import cpu_count
 
 def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None, n_jobs=None, scoring=None,
-                        train_sizes=np.linspace(.1, 1.0, 5), verbose=0):
+                        train_sizes=np.linspace(.1, 1.0, 5), verbose=0, alpha=0.1, figsize=(17, 17/5)):
     """
     Ref: https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
 
@@ -53,7 +53,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None, n
         cross-validators that can be used here.
 
     n_jobs : int or None, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel for training sets.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -75,8 +75,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None, n
     """
     t = time()
     if axes is None:
-        # TODO: try constrainted_layout=False
-        fig, axes = plt.subplots(nrows=1, ncols=5, figsize=(16, 16/5), constrained_layout=True)
+        fig, axes = plt.subplots(nrows=1, ncols=5, figsize=figsize, constrained_layout=True)
 
     axes[0].set_title('Learning curve')
     if ylim is not None:
@@ -92,88 +91,89 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None, n
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
-    fit_times_mean = np.mean(fit_times, axis=1)
-    fit_times_std = np.std(fit_times, axis=1)
-    score_times_mean = np.mean(score_times, axis=1)
-    score_times_std = np.std(score_times, axis=1)
-
+    # workaround: forcing average time by cores
+    cores = cpu_count() if n_jobs == -1 else 1 if n_jobs is None else n_jobs
+    fit_times_mean = np.mean(fit_times, axis=1) / cores
+    fit_times_std = np.std(fit_times, axis=1) / cores
+    score_times_mean = np.mean(score_times, axis=1) / cores
+    score_times_std = np.std(score_times, axis=1) / cores
+    # TODO: split scores and times by number of cores to calculate mean and std
+    
+    
     # Plot learning curve
-    axes[0].grid()
+    axes[0].grid(color='gray', linestyle=':')
     axes[0].fill_between(train_sizes, train_scores_mean - train_scores_std,
-                         train_scores_mean + train_scores_std, alpha=0.1,
+                         train_scores_mean + train_scores_std, alpha=alpha,
                          color="r")
     axes[0].fill_between(train_sizes, test_scores_mean - test_scores_std,
-                         test_scores_mean + test_scores_std, alpha=0.1,
+                         test_scores_mean + test_scores_std, alpha=alpha,
                          color="g")
     axes[0].plot(train_sizes, train_scores_mean, 'o-', color="r",
-                 # label="Training score")
                  label="Training")
     axes[0].plot(train_sizes, test_scores_mean, 'o-', color="g",
-                 # label="Cross-validation score")
                  label="Cross-validation")
     # annotate the highest test score mean
-    axes[0].text(train_sizes.min(),
+    axes[0].text(train_sizes[test_scores_mean.argsort()[-1]] # train_sizes.min(),
                  test_scores_mean.max(),
                  '{:.4f}'.format(test_scores_mean.max()),
-                 va='center', ha='left', size=10, color='g').set_bbox(dict(facecolor='white', alpha=1, edgecolor='green'))
-    axes[0].legend(loc="best")
+                 va='top', ha='left', size=10, color='g').set_bbox(dict(facecolor='black', alpha=1, edgecolor='green'))
+    axes[0].legend(loc="lower right")
 
     # Plot n_samples vs fit_times
-    axes[1].grid()
+    axes[1].grid(color='gray', linestyle=':')
     axes[1].plot(train_sizes, fit_times_mean, 'o-', color='r')
     axes[1].fill_between(train_sizes, fit_times_mean - fit_times_std,
-                         fit_times_mean + fit_times_std, alpha=0.1)
+                         fit_times_mean + fit_times_std, alpha=alpha, color='r')
     axes[1].set_xlabel("Training examples")
     axes[1].set_ylabel("Fit time (s)")
     axes[1].set_title("Training scalability")
 
     # Plot fit_time vs score
     # new: sort fit times
-    fit_time_argsort = fit_times_mean.argsort()
-    fit_time_sorted = fit_times_mean[fit_time_argsort]
-    test_scores_mean_sorted = test_scores_mean[fit_time_argsort]
-    test_scores_std_sorted = test_scores_std[fit_time_argsort]
+    # fit_time_argsort = fit_times_mean.argsort()
+    # fit_time_sorted = fit_times_mean[fit_time_argsort]
+    # test_scores_mean_sorted = test_scores_mean[fit_time_argsort]
+    # test_scores_std_sorted = test_scores_std[fit_time_argsort]
     #
-    axes[2].grid()
-    # axes[2].plot(fit_times_mean, test_scores_mean, 'o-', color='g')
-    axes[2].plot(fit_time_sorted, test_scores_mean_sorted, 'o-', color='g')
+    axes[2].grid(color='gray', linestyle=':')
+    axes[2].plot(fit_times_mean, test_scores_mean, 'o-', color='g')
+    # axes[2].plot(fit_time_sorted, test_scores_mean_sorted, 'o-', color='g')
     
-    # axes[2].fill_between(fit_times_mean, test_scores_mean - test_scores_std,
-                         # test_scores_mean + test_scores_std, alpha=0.1)
-    axes[2].fill_between(fit_time_sorted, test_scores_mean_sorted - test_scores_std_sorted,
-                         test_scores_mean_sorted + test_scores_std_sorted, alpha=0.1)
+    axes[2].fill_between(fit_times_mean, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=alpha, color='g')
+    # axes[2].fill_between(fit_time_sorted, test_scores_mean_sorted - test_scores_std_sorted,
+    #                      test_scores_mean_sorted + test_scores_std_sorted, alpha=alpha, color='g')
     
     axes[2].set_xlabel("Fit time (s)")
     axes[2].set_ylabel("Cross-validation score")
     axes[2].set_title("Model performance")
 
     # Plot n_samples vs score_times
-    axes[3].grid()
+    axes[3].grid(color='gray', linestyle=':')
     axes[3].plot(train_sizes, score_times_mean, 'o-', color='g')
     axes[3].fill_between(train_sizes, score_times_mean - score_times_std,
-                         score_times_mean + score_times_std, alpha=0.1)
+                         score_times_mean + score_times_std, alpha=alpha, color='g')
     axes[3].set_xlabel("Training examples")
     axes[3].set_ylabel("Cross-validation score time (s)")
     axes[3].set_title("Cross-validation scalability")
 
     # Plot score_time vs score
-    # new: sort fit times
-    score_time_argsort = score_times_mean.argsort()
-    score_time_sorted = score_times_mean[score_time_argsort]
-    test_scores_mean_sorted = test_scores_mean[score_time_argsort]
-    test_scores_std_sorted = test_scores_std[score_time_argsort]
+    # new: sort score times
+    # score_time_argsort = score_times_mean.argsort()
+    # score_time_sorted = score_times_mean[score_time_argsort]
+    # test_scores_mean_sorted = test_scores_mean[score_time_argsort]
+    # test_scores_std_sorted = test_scores_std[score_time_argsort]
     #
-    axes[4].grid()
-    # axes[4].plot(score_times_mean, test_scores_mean, 'o-', color='g')
-    axes[4].plot(score_times_sorted, test_scores_mean_sorted, 'o-', color='g')
-    # axes[4].fill_between(score_times_mean, test_scores_mean - test_scores_std,
-    #                      test_scores_mean + test_scores_std, alpha=0.1)
-    axes[4].fill_between(score_time_sorted, test_scores_mean_sorted - test_scores_std_sorted,
-                         test_scores_mean_sorted + test_scores_std_sorted, alpha=0.1)
+    axes[4].grid(color='gray', linestyle=':')
+    axes[4].plot(score_times_mean, test_scores_mean, 'o-', color='g')
+    # axes[4].plot(score_time_sorted, test_scores_mean_sorted, 'o-', color='g')
+    axes[4].fill_between(score_times_mean, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=alpha, color='g')
+    # axes[4].fill_between(score_time_sorted, test_scores_mean_sorted - test_scores_std_sorted,
+    #                      test_scores_mean_sorted + test_scores_std_sorted, alpha=alpha, color='g')
     axes[4].set_xlabel("Cross-validation score time (s)")
     axes[4].set_ylabel("Cross-validation score")
     axes[4].set_title("Cross-validation performance")
 
     fig.suptitle('{} in {:.1f} minutes'.format(title, np.floor(time() - t) / 60))
-
     return plt
