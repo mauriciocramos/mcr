@@ -20,7 +20,12 @@ def disambiguate(df=None, reference=None, ambiguous=None, sparse=False):
     """
     df=df[[reference, ambiguous]].copy()
     ambiguous_reference = ambiguous+'_'+reference
-    df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous_reference] = df[ambiguous]
-    df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous] = np.nan
+    
+    # df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous_reference] = df[ambiguous]
+    df.loc[df[reference].notnull(), ambiguous_reference] = df[ambiguous]
+   
+    # df.loc[df[reference].notnull() & (df[reference]!=0) & df[ambiguous].notnull(), ambiguous] = np.nan
+    df.loc[df[reference].notnull(), ambiguous] = np.nan
+    
     df = df.apply(pd.to_numeric, downcast='float')
     return csr_matrix(df) if sparse else df

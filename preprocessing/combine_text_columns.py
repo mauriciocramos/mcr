@@ -1,4 +1,4 @@
-def combine_text_columns(df=None, to_drop=None, sep=' '):
+def combine_text_columns(df, to_drop=None, sep=' '):
     """ Takes the dataset as read in, drops the non-text columns by default and
         then combines all of the text columns into a single vector that has all of
         the text for a row.
