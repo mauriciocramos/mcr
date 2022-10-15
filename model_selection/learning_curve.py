@@ -113,7 +113,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None, n
     axes[0].plot(train_sizes, test_scores_mean, 'o-', color="g",
                  label="Cross-validation")
     # annotate the highest test score mean
-    axes[0].text(train_sizes[test_scores_mean.argsort()[-1]] # train_sizes.min(),
+    axes[0].text(train_sizes[test_scores_mean.argsort()[-1]], # train_sizes.min(),
                  test_scores_mean.max(),
                  '{:.4f}'.format(test_scores_mean.max()),
                  va='top', ha='left', size=10, color='g').set_bbox(dict(facecolor='black', alpha=1, edgecolor='green'))
