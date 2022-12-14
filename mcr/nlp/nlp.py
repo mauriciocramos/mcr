@@ -16,6 +16,7 @@ from mcr.ml.preprocessing.combine_text_columns import combine_text_columns
 SKLEARN_WORD_TOKENIZER_REGEX = r'(?u)\b\w\w+\b'  # SKLEARN's default selects 2+ tokens
 WORD_TOKENIZER_REGEX = r'(?u)\b\w+\b'  # select 1+ tokens
 NLTK_WORD_PUNCT_TOKENIZER_REGEX = r'\w+|[^\w\s]+'
+EMOJI_TOKENIZER_REGEX = r"['\U0001F300-\U0001F5FF'|'\U0001F600-\U0001F64F'|'\U0001F680-\U0001F6FF'|'\u2600-\u26FF\u2700-\u27BF']"
 
 # End of sentence pattern matches:
 # optional not-word symbol, any spacing symbols, optional \r, one more \n, any spacing symbols and any non-word symbols
