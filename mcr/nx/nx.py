@@ -76,28 +76,25 @@ def path_exists(G, node1, node2):
     """
     This function checks whether a path exists between two nodes (node1, node2) in graph G.
     """
+    assert node1!=node2, "must be different nodes"
     visited_nodes = set()
     # starting queue
     queue = [node1]
-
-    # queue dynamically extended with unvisited neighbors of the node if node2 isn't a neighbor of node
+    # queue dinamically extended with unvisited neighbors of the node if node2 isn't a neighbor of node
     for node in queue:
         neighbors = list(G.neighbors(node))
+        # Add current node to visited nodes
+        visited_nodes.add(node)
         if node2 in neighbors:
-            print('Path exists between nodes {0} and {1}'.format(node1, node2))
-            print(f'{visited_nodes=}')
             return True
-            break
         else:
-            # Add current node to visited nodes
-            visited_nodes.add(node)
-            # Add neighbors of current node that have not yet been visited
+            # Add neighbors of current node that have not yet been visited...
+            # ...avoiding loops and self-loops:
             not_visited_neighbors = [n for n in neighbors if n not in visited_nodes]
+            # print(f'{not_visited_neighbors}')
             queue.extend(not_visited_neighbors)
             # Check to see if the final element of the queue has been reached
             if node == queue[-1]:
-                print('Path does not exist between nodes {0} and {1}'.format(node1, node2))
-                print(f'{visited_nodes=}')
                 return False
 
 
