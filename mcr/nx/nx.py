@@ -1,3 +1,4 @@
+from collections import defaultdict
 from multiprocessing import Pool, cpu_count
 from itertools import combinations, islice
 import networkx as nx
@@ -108,13 +109,13 @@ def find_nodes_with_highest_degree_centrality(G):
     deg_cent = nx.degree_centrality(G)
     # Compute the maximum degree centrality: max_dc
     max_dc = max(list(deg_cent.values()))
-    nodes = set()
+    nodes = []
     # Iterate over the degree centrality dictionary
     for k, v in deg_cent.items():
         # Check if the current value has the maximum degree centrality
         if v == max_dc:
             # Add the current node to the set of nodes
-            nodes.add(k)
+            nodes.append(k)
     return nodes
 
 
@@ -213,6 +214,16 @@ def node_in_open_triangle(G, n):
     return in_open_triangle
 
 
+def recommend_connections(G, top=10):
+    recommended = defaultdict(int)
+    for n, d in G.nodes(data=True):
+        for n1, n2 in combinations(G.neighbors(n), 2):
+            if not G.has_edge(n1, n2):  # open triangle
+                recommended[(n1, n2)] += 1
+    sorted_counts = sorted(recommended.values())
+    return [pair for pair, count in recommended.items() if count > sorted_counts[-10]]
+
+
 def maximal_cliques(G, size):
     """Finds all maximal cliques in graph `G` that are of size `size`."""
     mcs = []
@@ -252,3 +263,17 @@ def get_node_attributes_values(G):
 
 def get_edge_attributes_values(G):
     return {k: v for n1, n2, kv in G.edges(data=True) for k, v in kv.items()}
+
+
+def find_largest_clique(G):
+    return sorted(nx.find_cliques(G), key=lambda x: len(x))[-1]
+
+
+def get_largest_clique_with_neighbors(G):
+    largest_clique = find_largest_clique(G)
+    G_lc = G.subgraph(largest_clique).copy()
+    # Go out 1 degree of separation
+    for node in list(G_lc.nodes()):
+        G_lc.add_nodes_from(G.neighbors(node))
+        G_lc.add_edges_from(zip([node] * len(list(G.neighbors(node))), G.neighbors(node)))
+    return G_lc
