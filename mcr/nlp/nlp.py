@@ -173,7 +173,7 @@ def token_count(text,
         dtype = np.int64 if name == 'count' else np.float64
     ngram_vectorizer = \
         vectorizer(tokenizer=tokenizer if tokenizer is None else tokenizer.tokenize,
-                   token_pattern=token_pattern,
+                   token_pattern=token_pattern if tokenizer is None else None,
                    lowercase=lowercase, stop_words=stop_words, ngram_range=ngram_range, min_df=min_df, max_df=max_df,
                    max_features=max_features, vocabulary=vocabulary, dtype=dtype)
     transformed_data = ngram_vectorizer.fit_transform(text)
