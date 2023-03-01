@@ -388,13 +388,13 @@ def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, m
         return
 
     if figsize is None:
-        figsize = (19.2 / 1, 10.8 * values.shape[0] / 50)
+        figsize = (19.2 / 1, min(2**16 - 1, 10.8 * len(values) / 50))
     if xlim is None:
         xlim = [0, values['sum'].max()*1.2]
     ax = values['sum'].plot(kind='barh',
                             figsize=figsize,
                             xlim=xlim,
-                            title=f'{s.name}: top {values.shape[0]}/{s.shape[0]}',
+                            title=f'{s.name}: top {len(values)} of {len(s)}',
                             width=0.90)
     labels = [f"{row[0]:,.0f} ({row[1]*100:.{decimals}f}%)" for row in values.values]
     ax.bar_label(ax.containers[0], labels=labels, label_type='edge', color='white')
