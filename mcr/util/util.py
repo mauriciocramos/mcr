@@ -348,25 +348,35 @@ def plot_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1):
     ax.bar_label(ax.containers[0], labels=labels, label_type='edge', color='white')
 
 
-def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, max_frequency=1.0, max_features=None):
+def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, max_frequency=1.0,
+                      max_cum_frequency=1.0, max_features=None):
     assert \
-        (isinstance(min_frequency, int) and min_frequency > 0) or \
+        (isinstance(min_frequency, int) and 0 < min_frequency) or \
         (isinstance(min_frequency, float) and 0 < min_frequency <= 1.0), \
-        "min_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)"
+        'min_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)'
     assert \
-        (isinstance(max_frequency, int) and max_frequency > 0) or \
+        (isinstance(max_frequency, int) and 0 < max_frequency) or \
         (isinstance(max_frequency, float) and 0 < max_frequency <= 1.0), \
-        "max_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)"
+        'max_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)'
+    assert \
+        (isinstance(max_cum_frequency, int) and 0 < max_cum_frequency) or \
+        (isinstance(max_cum_frequency, float) and 0 < max_cum_frequency <= 1.0), \
+        'max_cum_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)'
     assert \
         max_features is None or (isinstance(max_features, int) and max_features >= 1), \
-        "max_features must be None or a positive integer"
+        'max_features must be None or a positive integer'
 
     if s.count() == 0:
         print(f'No values found in {s.name}')
         return
-    svc = s.value_counts(ascending=True)
-    values = pd.DataFrame({'sum': svc,
-                           'proportion': svc / len(s)})  # .sort_values('sum')
+    vc = s.value_counts(dropna=False)
+    vp = vc / len(s)
+    values = pd.DataFrame({'sum': vc,
+                           'cum_sum': vc.cumsum(),
+                           'proportion': vp,
+                           'cum_proportion': vp.cumsum()})
+    total_size = len(values)
+
     if isinstance(min_frequency, int) and min_frequency > 1:
         values = values.loc[(values['sum'] >= min_frequency)]
     elif isinstance(min_frequency, float):
@@ -374,15 +384,25 @@ def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, m
     if len(values) == 0:
         print(f'No values found for {s.name}. Try to adjust min_frequency ({min_frequency})')
         return
+
     if isinstance(max_frequency, int):
         values = values.loc[(values['sum'] <= max_frequency)]
     elif isinstance(max_frequency, float) and max_frequency < 1.0:
-        values = values.loc[(values['sum' if max_frequency >= 1 else 'proportion'] <= max_frequency)]
+        values = values.loc[(values['proportion'] <= max_frequency)]
     if len(values) == 0:
         print(f'No values found for {s.name}. Try to adjust max_frequency ({max_frequency})')
         return
+
+    if isinstance(max_cum_frequency, int):
+        values = values.loc[(values['cum_sum'] <= max_cum_frequency)]
+    elif isinstance(max_cum_frequency, float) and max_cum_frequency < 1.0:
+        values = values.loc[(values['cum_proportion'] <= max_cum_frequency)]
+    if len(values) == 0:
+        print(f'No values found for {s.name}. Try to adjust max_cum_frequency ({max_cum_frequency})')
+        return
+
     if max_features is not None:
-        values = values.tail(max_features)
+        values = values.head(max_features)
     if len(values) == 0:
         print(f'No values found for {s.name}. Try to adjust max_features ({max_features})')
         return
@@ -391,13 +411,15 @@ def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, m
         figsize = (19.2 / 1, min(2**16 - 1, 10.8 * len(values) / 50))
     if xlim is None:
         xlim = [0, values['sum'].max()*1.2]
+    labels = [f"{row[0]:,.0f} ({row[2]*100:.{decimals}f}%)" for row in values.values]
+
     ax = values['sum'].plot(kind='barh',
                             figsize=figsize,
                             xlim=xlim,
-                            title=f'{s.name}: top {len(values)} of {len(s)}',
+                            title=f'{s.name}: top {len(values)} of {total_size}',
                             width=0.90)
-    labels = [f"{row[0]:,.0f} ({row[1]*100:.{decimals}f}%)" for row in values.values]
     ax.bar_label(ax.containers[0], labels=labels, label_type='edge', color='white')
+    plt.gca().invert_yaxis()
 
 
 def density_plots(x, label=None, outlying=True, zthreshold=3, bins=None, figsize=(19, 4)):
