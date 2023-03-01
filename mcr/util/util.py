@@ -348,11 +348,45 @@ def plot_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1):
     ax.bar_label(ax.containers[0], labels=labels, label_type='edge', color='white')
 
 
-def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1):
+def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, max_frequency=1.0, max_features=None):
+    assert \
+        (isinstance(min_frequency, int) and min_frequency > 0) or \
+        (isinstance(min_frequency, float) and 0 < min_frequency <= 1.0), \
+        "min_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)"
+    assert \
+        (isinstance(max_frequency, int) and max_frequency > 0) or \
+        (isinstance(max_frequency, float) and 0 < max_frequency <= 1.0), \
+        "max_frequency must be a positive integer or a float between 0.0 (exclusive) and 1.0 (inclusive)"
+    assert \
+        max_features is None or (isinstance(max_features, int) and max_features >= 1), \
+        "max_features must be None or a positive integer"
+
+    if s.count() == 0:
+        print(f'No values found in {s.name}')
+        return
     svc = s.value_counts(ascending=True)
     values = pd.DataFrame({'sum': svc,
-                           'proportion': svc / s.notnull().sum()})  # .sort_values('sum')
-    values = values.loc[values['sum'] >= min_frequency]
+                           'proportion': svc / len(s)})  # .sort_values('sum')
+    if isinstance(min_frequency, int) and min_frequency > 1:
+        values = values.loc[(values['sum'] >= min_frequency)]
+    elif isinstance(min_frequency, float):
+        values = values.loc[(values['proportion'] >= min_frequency)]
+    if len(values) == 0:
+        print(f'No values found for {s.name}. Try to adjust min_frequency ({min_frequency})')
+        return
+    if isinstance(max_frequency, int):
+        values = values.loc[(values['sum'] <= max_frequency)]
+    elif isinstance(max_frequency, float) and max_frequency < 1.0:
+        values = values.loc[(values['sum' if max_frequency >= 1 else 'proportion'] <= max_frequency)]
+    if len(values) == 0:
+        print(f'No values found for {s.name}. Try to adjust max_frequency ({max_frequency})')
+        return
+    if max_features is not None:
+        values = values.tail(max_features)
+    if len(values) == 0:
+        print(f'No values found for {s.name}. Try to adjust max_features ({max_features})')
+        return
+
     if figsize is None:
         figsize = (19.2 / 1, 10.8 * values.shape[0] / 50)
     if xlim is None:
