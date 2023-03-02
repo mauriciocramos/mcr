@@ -320,13 +320,24 @@ def npinfo(dtype):
 
 
 def plot_unique(df, figsize=None, xlim=None, decimals=2):
-    unique = pd.DataFrame({'sum': df.nunique(), 'proportion': df.nunique() / df.notnull().sum()}).sort_values('sum')
+    unique = pd.DataFrame({'sum': df.nunique(), 'proportion': df.nunique() / len(df)}).sort_values('sum')
     if figsize is None:
         figsize = (10, unique.shape[0]/4)
     if xlim is None:
         xlim = [0, unique['sum'].max()*1.25]
     ax = unique['sum'].plot(kind='barh', figsize=figsize, xlim=xlim)
     labels = [f"{row[0]:,.0f} ({row[1]*100:.{decimals}f}%)" for row in unique.values]
+    ax.bar_label(ax.containers[0], labels=labels)
+
+
+def plot_duplicates(df, figsize=None, xlim=None, decimals=2):
+    duplicates = pd.DataFrame({'sum': len(df) - df.nunique(), 'proportion': 1 - df.nunique() / len(df)}).sort_values('sum')
+    if figsize is None:
+        figsize = (10, duplicates.shape[0]/4)
+    if xlim is None:
+        xlim = [0, duplicates['sum'].max()*1.25]
+    ax = duplicates['sum'].plot(kind='barh', figsize=figsize, xlim=xlim)
+    labels = [f"{row[0]:,.0f} ({row[1]*100:.{decimals}f}%)" for row in duplicates.values]
     ax.bar_label(ax.containers[0], labels=labels)
 
 
