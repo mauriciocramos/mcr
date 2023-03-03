@@ -368,6 +368,7 @@ def plot_value_counts_timeseries(df, index, column, top=7, rule='D', figsize=(19
         .reset_index(level=1).pivot(columns=column).droplevel(0, axis=1)\
         .resample(rule).sum()\
         .plot(figsize=(19.2, 10.8))
+    plt.title(f'{column} time series')
 
 
 def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, max_frequency=1.0,
