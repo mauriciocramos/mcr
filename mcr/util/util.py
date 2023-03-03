@@ -359,6 +359,17 @@ def plot_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1):
     ax.bar_label(ax.containers[0], labels=labels, label_type='edge', color='white')
 
 
+def plot_value_counts_timeseries(df, index, column, top=7, rule='D', figsize=(19.2, 10.8)):
+    top_values = df[column].value_counts().head(top).index.tolist()
+    df\
+        .loc[df[column].isin(top_values), [index, column]].astype({column: 'object'})\
+        .groupby([index, column], dropna=False)[column].count().rename(f'{column}_count')\
+        .to_frame()\
+        .reset_index(level=1).pivot(columns=column).droplevel(0, axis=1)\
+        .resample(rule).sum()\
+        .plot(figsize=(19.2, 10.8))
+
+
 def plot_value_counts(s, figsize=None, xlim=None, decimals=2, min_frequency=1, max_frequency=1.0,
                       max_cum_frequency=1.0, max_features=None):
     assert \
