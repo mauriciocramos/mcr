@@ -144,12 +144,9 @@ def statistics(documents, language='english'):
     return pd.Series(data, index=columns, name=documents.name)
 
 
-def token_count(text,
-                vectorizer=CountVectorizer,
-                tokenizer=WordTokenizer(language='english'),
-                token_pattern=WORD_TOKENIZER_REGEX,
-                lowercase=True, stop_words=None, ngram_range=(1, 1), min_df=1, max_df=1.0, max_features=None,
-                vocabulary=None, dtype=None):
+def token_count(text, vectorizer=CountVectorizer, tokenizer=WordTokenizer(language='english'),
+                token_pattern=WORD_TOKENIZER_REGEX, lowercase=True, stop_words=None, ngram_range=(1, 1),
+                min_df=1, max_df=1.0, max_features=None, vocabulary=None, dtype=None):
     """
     Usages:
         tokenizer_count(text) # default WordTokenizer(language='english')
@@ -197,16 +194,16 @@ def ngram_builder(corpus, vectorizer=CountVectorizer, tokenizer=WordTokenizer(la
                             max_features=max_features, vocabulary=vocabulary, dtype=dtype),
                 name=name).to_frame().assign(n=np.uint8(ngram))
              for ngram in range(ngram_range[0], ngram_range[1] + 1))
-        )
+        ).sort_values([name, 'n'], ascending=[False, True])
     return ngram_df.rename_axis('ngram')
 
 
 def ngram_plot(ngrams, suptitle=None, rows_per_page=50, figsize=None):
-    max_ngram = ngrams['n'].max()
+    min_gram, max_ngram = ngrams['n'].agg(['min', 'max']).tolist()
     max_rows = ngrams.groupby('n').size().max()
     if figsize is None:
         figsize = (19.2 * ((max_ngram + 1) / 2), 10.8 * (max(max_rows, rows_per_page/2) / rows_per_page))
-    fig, axes = plt.subplots(1, max_ngram, figsize=figsize)
+    fig, axes = plt.subplots(1, max_ngram - min_gram + 1, figsize=figsize)
     i = 0
     for n, df in ngrams.groupby('n'):
         ax = axes[i] if isinstance(axes, np.ndarray) else axes
