@@ -60,7 +60,7 @@ def multiple_replace(replace_dict, text):
     return regex.sub(lambda mo: replace_dict[mo.string[mo.start():mo.end()]], text)
 
 
-def get_multiple_keywords(kw_dict, text, sep=','):
+def get_regex_keywords(kw_dict, text, sep=','):
     """
     Extract unique keywords from a multiple regex dictionary
 
@@ -84,6 +84,14 @@ def get_multiple_keywords(kw_dict, text, sep=','):
     consolidated_kw = sorted(set(consolidated_kw))
     consolidated_kw = sep.join(consolidated_kw)
     return consolidated_kw if consolidated_kw != '' else None
+
+
+def get_regex_keywords_from_pandas(df, kw_dict, empty='unknown'):
+    s = df\
+        .apply(lambda x: x.apply(lambda text: get_regex_keywords(kw_dict, text)), axis=0)\
+        .apply(lambda x: ','.join(k for k in list(sorted(set(','.join(x.dropna().sort_values().unique()).split(','))))), axis=1)\
+        .replace('', 'unknown')
+    return s
 
 
 def get_dict_keys_types(dictionary, parent_key=None):
