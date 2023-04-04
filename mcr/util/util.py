@@ -60,13 +60,13 @@ def multiple_replace(replace_dict, text):
     return regex.sub(lambda mo: replace_dict[mo.string[mo.start():mo.end()]], text)
 
 
-def get_multiple_keywords(kw_dict, text):
+def get_multiple_keywords(kw_dict, text, sep=','):
     """
     Extract unique keywords from a multiple regex dictionary
 
-    kw_dict = {r'off[- ]?site|off[- ]?pre[mise]+|remot[eoa]': 'remote',
-               r'on[- ]?site|on[- ]?pre[mise]+|presencial': 'onsite',
-               r'h[íiy]brid[oa]?': 'hybrid'}
+    kw_dict = {r'h[íiy]brid[oa]?|semi[- ]?presencial': 'hybrid',
+               r'off[- ]?site|off[- ]?pre[mise]+|remot[eoa]': 'remote',
+               r'on[- ]?site|on[- ]?pre[mise]+|presencial': 'onsite'}
 
     get_keywords(kw_dict, text)
     """
@@ -82,7 +82,7 @@ def get_multiple_keywords(kw_dict, text):
                 consolidated_kw.append(repl)
                 break
     consolidated_kw = sorted(set(consolidated_kw))
-    consolidated_kw = ', '.join(consolidated_kw)
+    consolidated_kw = sep.join(consolidated_kw)
     return consolidated_kw if consolidated_kw != '' else None
 
 
