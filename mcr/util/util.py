@@ -59,6 +59,33 @@ def multiple_replace(replace_dict, text):
     # For each match, look-up corresponding value in dictionary
     return regex.sub(lambda mo: replace_dict[mo.string[mo.start():mo.end()]], text)
 
+
+def get_multiple_keywords(kw_dict, text):
+    """
+    Extract unique keywords from a multiple regex dictionary
+
+    kw_dict = {r'off[- ]?site|off[- ]?pre[mise]+|remot[eoa]': 'remote',
+               r'on[- ]?site|on[- ]?pre[mise]+|presencial': 'onsite',
+               r'h[íiy]brid[oa]?': 'hybrid'}
+
+    get_keywords(kw_dict, text)
+    """
+    # extract every acceptable keyword
+    kw_regex = re.compile('|'.join(kw_dict.keys()), flags=re.IGNORECASE)
+    unique_kw = sorted(set(kw_regex.findall(text.lower())))
+    # consolidate keywords
+    consolidated_kw = []
+    for item in unique_kw:
+        for pattern, repl in kw_dict.items():
+            match = re.search(pattern, item)
+            if match:
+                consolidated_kw.append(repl)
+                break
+    consolidated_kw = sorted(set(consolidated_kw))
+    consolidated_kw = ', '.join(consolidated_kw)
+    return consolidated_kw if consolidated_kw != '' else None
+
+
 def get_dict_keys_types(dictionary, parent_key=None):
     # Generator function to recursively extract dictionary keys and types
     for key, value in dictionary.items():
