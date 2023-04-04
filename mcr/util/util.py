@@ -47,6 +47,18 @@ def glimpse(df, n=5, info=True, deep=True):
     return g
 
 
+def multiple_replace(replace_dict, text):
+    # ref: https://stackoverflow.com/questions/15175142/how-can-i-do-multiple-substitutions-using-regex
+    """
+    Perform multiple replacements in a string
+    multiple_replace({'one': '1', 'two': '2'}, "one, two"}
+    '1, 2'
+    """
+    # Create a regular expression  from the dictionary keys
+    regex = re.compile("(%s)" % "|".join(map(re.escape, replace_dict.keys())))
+    # For each match, look-up corresponding value in dictionary
+    return regex.sub(lambda mo: replace_dict[mo.string[mo.start():mo.end()]], text)
+
 def get_dict_keys_types(dictionary, parent_key=None):
     # Generator function to recursively extract dictionary keys and types
     for key, value in dictionary.items():
