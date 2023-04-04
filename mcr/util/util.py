@@ -90,7 +90,7 @@ def get_regex_keywords_from_pandas(df, kw_dict, empty='unknown'):
     s = df\
         .apply(lambda x: x.apply(lambda text: get_regex_keywords(kw_dict, text)), axis=0)\
         .apply(lambda x: ','.join(k for k in list(sorted(set(','.join(x.dropna().sort_values().unique()).split(','))))), axis=1)\
-        .replace('', 'unknown')
+        .replace('', empty)
     return s
 
 
