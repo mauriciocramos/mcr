@@ -48,7 +48,7 @@ def split_explode_join(df, groupby, column, sep=', ', concat_sep='_'):
         .withColumn(f'EXPLODED_{column}_LIST', F.concat(F.lit(f'{column}{concat_sep}'), F.trim(f'EXPLODED_{column}_LIST')))\
         .withColumn('ONE', F.lit(1))\
         .groupBy(groupby).pivot(f'EXPLODED_{column}_LIST').agg(F.coalesce(F.first('ONE')))
-    return df.join(exploded_df, on='NO', how='left')
+    return df.join(exploded_df, on=groupby, how='left')
 
 
 def prefixed_join(df, groupby, column, concat_sep=':'):
@@ -57,4 +57,4 @@ def prefixed_join(df, groupby, column, concat_sep=':'):
         .withColumn(f'{column.upper()}_PREFIXED', F.concat(F.lit(f'{column}{concat_sep}'), F.upper(F.trim(column))))\
         .withColumn('ONE', F.lit(1))\
         .groupBy(groupby).pivot(f'{column}_PREFIXED').agg(F.coalesce(F.first('ONE')))
-    return df.join(prefixed_df, on='NO', how='left')
+    return df.join(prefixed_df, on=groupby, how='left')
