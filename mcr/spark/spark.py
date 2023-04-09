@@ -29,6 +29,11 @@ def column_dropper(df, threshold):
     return df
 
 
+def drop_low_observation_columns(df, columns, threshold=30):
+    return df.drop(*np.array(columns)[np.array([df.agg({f'`{col}`': 'sum'}).collect()[0][0] < threshold
+                                                for col in columns])])
+
+
 def train_test_split_date(df, split_col, test_days):
     split_date = None
     if isinstance(test_days, float):
@@ -61,9 +66,3 @@ def prefixed_join(df, groupby, column, concat_sep=':'):
         .withColumn('ONE', F.lit(1))\
         .groupBy(groupby).pivot(f'{column}_PREFIXED').agg(F.coalesce(F.first('ONE')))
     return df.join(prefixed_df, on=groupby, how='left')
-
-
-def drop_low_observation_columns(df, columns, threshold=30):
-    return df.drop(*np.array(columns)[np.array([df.agg({f'`{col}`': 'sum'}).collect()[0][0] < threshold
-                                                for col in columns])])
-
