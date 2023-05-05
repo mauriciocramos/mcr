@@ -66,3 +66,22 @@ def prefixed_join(df, groupby, column, concat_sep=':'):
         .withColumn('ONE', F.lit(1))\
         .groupBy(groupby).pivot(f'{column}_PREFIXED').agg(F.coalesce(F.first('ONE')))
     return df.join(prefixed_df, on=groupby, how='left')
+
+
+def roem(spark, predictions, user_col=None, rating_col=None):
+    """
+    (ROEM) Rank Ordering Error Metric
+    Expected percentile rank error metric function
+    https://github.com/jamenlong/ALS_expected_percent_rank_cv/blob/master/ROEM_cv.py
+    """
+    # Creates table that can be queried
+    predictions.createOrReplaceTempView("predictions")
+    # Sum of total number of plays of all songs
+    denominator = predictions.groupBy().sum(rating_col).collect()[0][0]
+    # Calculating rankings of songs predictions by user
+    spark.sql("SELECT " + user_col + " , " + rating_col + " , PERCENT_RANK() OVER (PARTITION BY " + user_col +
+              " ORDER BY prediction DESC) AS rank FROM predictions").createOrReplaceTempView("rankings")
+    # Multiplies the rank of each song by the number of plays and adds the products together
+    numerator = spark.sql('SELECT SUM(' + rating_col + ' * rank) FROM rankings').collect()[0][0]
+    performance = numerator / denominator
+    return performance
