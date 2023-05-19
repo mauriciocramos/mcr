@@ -1,1 +1,1 @@
-from spark import *
+from .spark import *

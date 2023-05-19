@@ -1,6 +1,6 @@
 import datetime
-
 import numpy as np
+from pyspark.sql import functions as F
 
 
 def min_max_scaler(df, cols_to_scale):
@@ -44,16 +44,16 @@ def train_test_split_date(df, split_col, test_days):
     elif isinstance(test_days, int):
         max_date = df.agg({split_col: 'max'}).collect()[0][0]
         split_date = max_date - datetime.timedelta(days=test_days)
-        max_date = df.agg({split_col: 'max'}).collect()[0][0]
     return split_date
 
 
 def split_explode_join(df, groupby, column, sep=', ', concat_sep='_'):
     exploded_df = df[[groupby, column]]\
         .fillna('NaN', subset=column)\
-        .withColumn(f'{column}_LIST' , F.split(F.upper(column), sep))\
+        .withColumn(f'{column}_LIST', F.split(F.upper(column), sep))\
         .withColumn(f'EXPLODED_{column}_LIST', F.explode(f'{column}_LIST'))\
-        .withColumn(f'EXPLODED_{column}_LIST', F.concat(F.lit(f'{column}{concat_sep}'), F.trim(f'EXPLODED_{column}_LIST')))\
+        .withColumn(f'EXPLODED_{column}_LIST', F.concat(F.lit(f'{column}{concat_sep}'),
+                                                        F.trim(f'EXPLODED_{column}_LIST')))\
         .withColumn('ONE', F.lit(1))\
         .groupBy(groupby).pivot(f'EXPLODED_{column}_LIST').agg(F.coalesce(F.first('ONE')))
     return df.join(exploded_df, on=groupby, how='left')
@@ -70,7 +70,7 @@ def prefixed_join(df, groupby, column, concat_sep=':'):
 
 def roem(spark, predictions, user_col=None, rating_col=None):
     """
-    (ROEM) Rank Ordering Error Metric
+    (ROEM) Rank Ordering Error Metric for Spark ALS implicit ratings models
     Expected percentile rank error metric function
     https://github.com/jamenlong/ALS_expected_percent_rank_cv/blob/master/ROEM_cv.py
     """
