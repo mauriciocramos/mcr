@@ -73,3 +73,17 @@ def date_convert(s, lc_time='pt_BR.UTF-8', cleanup='[/ ]', fmt='%B%Y'):
         .apply(lambda x: None if x == '' else datetime.strptime(x, fmt))
     locale.setlocale(locale.LC_TIME, current_locale)
     return t
+
+
+# TODO: language-neutral refactor this function and support custom aggregations
+def plot_recorrencia(ts, rule, hours, figsize=(19.2, 10.8/2), linestyle=None, marker='.', alpha=1, markersize=1, linewidth=1, fontsize=None):
+    start_date = ts.index.min()
+    temp = ts.resample(rule).sum()
+    length = temp.shape[0]
+    temp.plot(legend=False, figsize=figsize, linestyle=linestyle, marker=marker, alpha=alpha, markersize=markersize, linewidth=linewidth)
+    del temp
+    plt.title(f'Séries temporais dos atendimentos por profissional na frequência {rule} (eixo X={length})'); plt.xlabel('atendimentos')
+    plt.axhline(hours*2, color='green', linestyle='-'); plt.text(x=start_date, y=hours*2*1.015, s="média para 30 minutos", color='black', backgroundcolor='green', fontsize=fontsize)
+    plt.axhline(hours*3, color='yellow', linestyle='-'); plt.text(x=start_date, y=hours*3*1.015, s="média para 20 minutos", color='black', backgroundcolor='yellow', fontsize=fontsize)
+    plt.axhline(hours*4, color='red', linestyle='-'); plt.text(x=start_date, y=hours*4*1.015, s="média para 15 minutos", color='black', backgroundcolor='red', fontsize=fontsize)
+    plt.show()
