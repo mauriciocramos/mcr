@@ -655,3 +655,47 @@ def cross_value_counts_summary(df):
     cvcs = cvcs.apply(pd.to_numeric, downcast='unsigned')
 
     return cvcs
+
+
+def image_metadata(path):
+    img = Image.open(path)
+    extrema = np.array(img.getextrema())
+    pixel_count = img.size[0] * img.size[1]
+    means = (
+        np.array(
+            [
+                count * np.array(pixel)
+                for count, pixel in img.getcolors(maxcolors=pixel_count)
+            ]
+        ).sum(axis=0)
+        / pixel_count
+    )
+    stds = (
+        np.array(
+            [
+                (np.array(pixel) - means) ** 2
+                for count, pixel in img.getcolors(maxcolors=pixel_count)
+            ]
+        ).sum(axis=0)
+        / pixel_count
+    ) ** (1 / 2)
+    return {
+        "mime_type": img.get_format_mimetype(),
+        "width": img.size[0],
+        "height": img.size[1],
+        "bands": "".join(img.getbands()),
+        "min_color": extrema.min(),
+        "max_color": extrema.max(),
+        **{f"color_mean_{i}": mu for i, mu in enumerate(means)},
+        **{f"color_stds_{i}": mu for i, mu in enumerate(stds)},
+    }
+
+
+def image_folder_metadata(pathname, sort=True, key=None, reverse=False, sep="/", columns=None):
+    paths = glob(pathname)
+    if sort:
+        paths.sort(key=key, reverse=reverse)
+    dfa = pd.DataFrame([ path.split("/") for path in paths ]).add_prefix('path_')
+    # dfa.columns = [f'dir{level}' for level in range(dfa.columns.size - 1)] + ['filename']
+    dfb = pd.DataFrame([image_metadata(path) for path in paths])
+    return pd.concat((dfa, dfb), axis=1)
