@@ -3,13 +3,15 @@ from math import pow, log, radians, sin, cos, atan2, sqrt
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from IPython.core.display import display, HTML
+from IPython.display import display, HTML
 import seaborn as sns
 from scipy.stats import truncnorm, zscore
 from time import time
 from math import floor
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
+from PIL import Image
+from glob import glob
 
 # Canada postal code regular expression based on:
 # https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s15.html
