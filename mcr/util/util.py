@@ -663,10 +663,12 @@ def image_metadata(path):
     img = Image.open(path)
     extrema = np.array(img.getextrema())
     pixel_count = img.size[0] * img.size[1]
+    # getcolor returns an unsorted list of (count, pixel) values.  Pixel can be a scalar int or a tuple of 3 ints
+    num_colors = len(img.getcolors(maxcolors=pixel_count))
     means = (
         np.array(
             [
-                count * np.array(pixel)
+                count * np.array(pixel if isinstance(pixel, list) else [pixel])
                 for count, pixel in img.getcolors(maxcolors=pixel_count)
             ]
         ).sum(axis=0)
@@ -675,7 +677,7 @@ def image_metadata(path):
     stds = (
         np.array(
             [
-                (np.array(pixel) - means) ** 2
+                (np.array(pixel if isinstance(pixel, list) else [pixel]) - means) ** 2
                 for count, pixel in img.getcolors(maxcolors=pixel_count)
             ]
         ).sum(axis=0)
@@ -686,6 +688,7 @@ def image_metadata(path):
         "width": img.size[0],
         "height": img.size[1],
         "bands": "".join(img.getbands()),
+        "num_colors": num_colors,
         "min_color": extrema.min(),
         "max_color": extrema.max(),
         **{f"color_mean_{i}": mu for i, mu in enumerate(means)},
