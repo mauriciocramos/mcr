@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from torchvision.io import read_image
 from torch.utils.data import Dataset
+import numpy as np
 
 class CustomImageDataset(Dataset):
     # source: https://pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files
@@ -23,3 +24,20 @@ class CustomImageDataset(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
         return image, label
+
+def create_sequences(data, seq_length):
+    xs, ys = [], []
+    # Iterate over data indices
+
+    # for i in range(len(data) - seq_length):
+    # changed above line to avoid incomplete sequences
+    # for i in range( int(len(data)/seq_length)*seq_length - seq_length):
+    # changed again
+    for i in range( len(data) // seq_length * seq_length - seq_length):
+        # Define inputs
+        x = data[i:i+seq_length, 1]
+        # Define target
+        y = data[i+seq_length, 1]
+        xs.append(x)
+        ys.append(y)
+    return np.array(xs), np.array(ys)
