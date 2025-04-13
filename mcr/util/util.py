@@ -9,9 +9,9 @@ from scipy.stats import truncnorm, zscore
 from time import time
 from math import floor
 from zipfile import ZipFile, ZIP_DEFLATED
-import os
 from PIL import Image
 from glob import glob
+import os, random, shutil
 
 # Canada postal code regular expression based on:
 # https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s15.html
@@ -684,6 +684,7 @@ def image_metadata(path):
         / pixel_count
     ) ** (1 / 2)
     return {
+        "file_size": os.path.getsize(path),
         "mime_type": img.get_format_mimetype(),
         "width": img.size[0],
         "height": img.size[1],
@@ -691,6 +692,7 @@ def image_metadata(path):
         "num_colors": num_colors,
         "min_color": extrema.min(),
         "max_color": extrema.max(),
+        # TODO: expand stats in separate columns
         **{f"color_mean_{i}": mu for i, mu in enumerate(means)},
         **{f"color_stds_{i}": mu for i, mu in enumerate(stds)},
     }
@@ -704,3 +706,18 @@ def image_folder_metadata(pathname, sort=True, key=None, reverse=False, sep="/",
     # dfa.columns = [f'dir{level}' for level in range(dfa.columns.size - 1)] + ['filename']
     dfb = pd.DataFrame([image_metadata(path) for path in paths])
     return pd.concat((dfa, dfb), axis=1)
+
+
+def move_files(src_class_dir, dest_class_dir, n=50):
+    # Function to move 50 (default) random files from a folder to another
+    # This code divides the training set into training and validation subsets.
+    # Example: Move 50 images from each class to validation folder
+    # move_files('data/chestxrays/train/NORMAL', 'data/chestxrays/val/NORMAL')
+    # move_files('data/chestxrays/train/PNEUMONIA', 'data/chestxrays/val/PNEUMONIA')
+    if not os.path.exists(dest_class_dir):
+        os.makedirs(dest_class_dir)
+    files = os.listdir(src_class_dir)
+    random_files = random.sample(files, n)
+    for f in random_files:
+        shutil.move(os.path.join(src_class_dir, f), os.path.join(dest_class_dir, f))
+
